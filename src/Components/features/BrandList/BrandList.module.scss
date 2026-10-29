@@ -1,0 +1,43 @@
+.brandList {
+  max-width: 560px;
+  list-style: none;
+  padding: 0;
+
+  // Брендов бывает много — список скроллится внутри и не выталкивает таблицу вниз.
+  // На телефоне пониже, чтобы под ним сразу была видна таблица аналогов
+  max-height: 320px;
+  overflow-y: auto;
+
+  // Рамка на всём списке, а не на пунктах: при прокрутке верхний край не пропадает
+  border: var(--bs-border-width) solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+
+  @media (min-width: 992px) {
+    max-height: 60vh;
+  }
+
+  // Класс list-group-item стоит на кнопке внутри li, поэтому list-group-flush
+  // до неё не дотягивается — границы задаём сами: только линия снизу как разделитель
+  :global(.list-group-item) {
+    border-width: 0 0 var(--bs-border-width);
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: left;
+  }
+
+  // У последнего пункта линия снизу не нужна — там уже рамка списка
+  li:last-child :global(.list-group-item) {
+    border-bottom-width: 0;
+  }
+
+  &__brand {
+    font-weight: 600;
+  }
+
+  &__name {
+    font-size: 0.875rem;
+    opacity: 0.75;
+  }
+}
