@@ -45,15 +45,15 @@ export const PartSearch = () => {
     };
 
     return (
-        <section className="mb-4">
-            <h2 className="h5 mb-3">1. Введите артикул детали</h2>
+        <section>
+            <h2 className="h6 mb-2">1. Артикул детали</h2>
             <SearchInput
                 value={number}
                 onChange={setNumber}
                 placeholder="Например, 01089"
             />
 
-            <h2 className="h5 mt-4 mb-3">2. Выберите производителя</h2>
+            <h2 className="h6 mt-4 mb-2">2. Производитель</h2>
 
             {isLoading === '' && (
                 <EmptyState text="Введите артикул детали" />

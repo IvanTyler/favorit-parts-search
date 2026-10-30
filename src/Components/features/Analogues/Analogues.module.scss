@@ -1,0 +1,18 @@
+.result {
+    position: relative;
+
+    // Пока грузится новый бренд — старая таблица приглушена
+    &_loading > *:first-child {
+        opacity: 0.35;
+        pointer-events: none;
+        transition: opacity 0.2s;
+    }
+
+    &__overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+    }
+}

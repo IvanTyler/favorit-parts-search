@@ -1,35 +1,28 @@
-// Превращает вложенный ответ этапа 2 в плоский список предложений для таблицы.
-//
-// Ответ устроен так:
-//   goods[]            — сама искомая деталь выбранного бренда
-//     warehouses[]     — её предложения: склад, цена, наличие
-//     analogues[]      — аналоги
-//       warehouses[]   — предложения аналога
-//
-// Одна строка таблицы = одна деталь на одном складе.
-// Цену и наличие берём из склада, а не из верхнего price детали.
-const toOffers = (part, isOriginal) =>
-    (part.warehouses ?? [])
-        // Без цены или без остатка — купить нельзя, такое предложение не показываем
-        .filter((warehouse) => warehouse.price > 0 && warehouse.stock > 0)
-        .map((warehouse) => ({
-            id: `${part.goodsID}-${warehouse.id}`,
-            brand: part.brand.trim(),
-            number: part.number?.trim() ?? '',
-            name: part.name?.trim() || 'Без названия',
-            warehouse: warehouse.code,
-            price: warehouse.price,
-            stock: warehouse.stock,
-            isOriginal,
-        }));
+// Превращает ответ этапа 2 в список строк для таблицы:
+// сначала выбранная деталь, за ней её аналоги. Одна строка — одна деталь.
+export const normalizeOffers = (goods = []) => {
+    const part = goods[0];
 
-export const normalizeOffers = (goods = []) =>
-    goods
-        // Пустая структура — так API отвечает, если ничего не найдено
-        .filter((part) => part?.brand?.trim())
-        .flatMap((part) => [
-            ...toOffers(part, true),
-            ...(part.analogues ?? [])
-                .filter((analogue) => analogue?.brand?.trim())
-                .flatMap((analogue) => toOffers(analogue, false)),
-        ]);
+    // Пустая структура — так API отвечает, если ничего не найдено
+    if (!part?.brand?.trim()) return [];
+
+    // Аналоги — по возрастанию цены, дешёвые сверху
+    const analogues = [...(part.analogues ?? [])].sort((a, b) => a.price - b.price);
+
+    return [part, ...analogues]
+        // Без цены или без остатка купить нельзя — такие позиции не показываем
+        .filter((item) => item.price > 0 && item.count > 0)
+        .map((item) => {
+            console.log('item', item)
+            return ({
+                id: item.goodsID,
+                brand: item.brand.trim(),
+                number: item.number?.trim() ?? '',
+                name: item.name?.trim() || 'Без названия',
+                price: item.price,
+                stock: item.count,
+                isOriginal: item === part,
+            })
+        }
+        );
+};

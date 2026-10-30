@@ -1,2 +1,20 @@
-// Bootstrap целиком на старте; позже можно подключать только нужные модули
+// Тема в стиле Autodoc: красный акцент, светлый фон, скруглённые карточки. Шрифт Roboto — как у Favorit-Parts.
+// Переменные задаём ДО импорта Bootstrap, тогда он соберёт все компоненты уже с ними
+$primary: #db141e;
+$font-family-sans-serif: 'Roboto', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+$body-bg: #f4f5f6;
+$body-color: #1d2433;
+$border-color: #e3e7ee;
+$border-radius: 0.625rem;
+$border-radius-lg: 1rem;
+$headings-font-weight: 700;
+
 @import 'bootstrap/scss/bootstrap';
+
+// Белая карточка-панель для колонок
+.panel {
+    background-color: #fff;
+    border-radius: $border-radius-lg;
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
