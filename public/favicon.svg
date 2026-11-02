@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Поиск автозапчастей Favorit-Parts">
+    <rect width="64" height="64" rx="14" fill="#db141e" />
+    <path d="M21 15h21v8H30v6h10v8H30v12h-9z" fill="#fff" />
+    <circle cx="45" cy="45" r="6.5" fill="#fff" />
+    <path d="M49.5 49.5 55 55" stroke="#fff" stroke-width="3.5" stroke-linecap="round" />
+</svg>
