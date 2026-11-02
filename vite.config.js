@@ -1,19 +1,21 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// API Favorit-Parts не отдаёт CORS-заголовки, поэтому запросы из браузера идут через прокси.
+// Один и тот же прокси нужен и dev-серверу, и preview: без него собранное приложение
+// будет стучаться в /api и получать 404
+const proxy = {
+    '/api': {
+        target: 'https://api.favorit-parts.ru',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+    },
+};
+
 export default defineConfig({
     plugins: [react()],
-    server: {
-        // API Favorit-Parts не отдаёт CORS-заголовки, поэтому запросы из браузера идут через прокси:
-        // /api/hs/hsprice/... -> https://api.favorit-parts.ru/hs/hsprice/...
-        proxy: {
-            '/api': {
-                target: 'https://api.favorit-parts.ru',
-                changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/api/, ''),
-            },
-        },
-    },
+    server: { proxy },
+    preview: { proxy },
     css: {
         preprocessorOptions: {
             scss: {

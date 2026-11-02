@@ -36,7 +36,7 @@ export const PartSearch = () => {
         }
 
         dispatch(brandsAction(debouncedNumber));
-    }, [debouncedNumber]);
+    }, [debouncedNumber, dispatch]);
 
     // Этап 2: клик по бренду — запрашиваем деталь этого бренда с аналогами
     const handleSelectBrand = (brand) => {

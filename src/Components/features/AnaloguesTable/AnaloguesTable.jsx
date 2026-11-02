@@ -9,15 +9,27 @@ const priceFormatter = new Intl.NumberFormat('ru-RU', {
 
 const COLUMNS_COUNT = 5;
 
+// «от 1 055 ₽» — когда цена взята с нескольких складов, дешевле может выйти дороже
+const formatPrice = (offer) => {
+    if (offer.price === null) return '—';
+    return `${offer.warehouses > 1 ? 'от ' : ''}${priceFormatter.format(offer.price)}`;
+};
+
 // Одна строка — одна деталь: производитель, артикул, название, остаток, цена
 const renderRow = (offer) => (
     <tr key={offer.id}>
         <td className="text-nowrap">{offer.brand}</td>
         <td className={clsx('text-nowrap', style.analoguesTable__number)}>{offer.number}</td>
         <td>{offer.name}</td>
-        <td className="text-end text-nowrap">{offer.stock} шт.</td>
+        <td className="text-end text-nowrap">
+            {offer.stock > 0 ? (
+                `${offer.stock} шт.`
+            ) : (
+                <span className="text-secondary">нет в наличии</span>
+            )}
+        </td>
         <td className={clsx('text-end text-nowrap', style.analoguesTable__price)}>
-            {priceFormatter.format(offer.price)}
+            {formatPrice(offer)}
         </td>
     </tr>
 );

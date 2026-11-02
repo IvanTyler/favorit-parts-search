@@ -1,8 +1,119 @@
-# React + Vite
+# Поиск автозапчастей и аналогов — Favorit-Parts
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Клиентское приложение на React: двухэтапный подбор номенклатуры по Web-сервису «Проценка»
+(`http://api.favorit-parts.ru/hs/hsprice/`, [документация](https://lk.favorit-parts.ru/static/wsprice.pdf)).
 
-Currently, two official plugins are available:
+1. Вводите артикул → приложение спрашивает API и показывает список производителей.
+2. Выбираете производителя → второй запрос (с `brand` и `analogues=on`) приносит аналог и
+   предложения с ценами и остатками.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Стек
+
+| Технология | Зачем |
+|---|---|
+| React 18 | интерфейс, без TypeScript — как в ТЗ |
+| Redux Toolkit + react-redux | два слайса: `brands` (этап 1) и `analogues` (этап 2) |
+| axios | запросы, `AbortController` для отмены устаревших |
+| Bootstrap 5 + SCSS | сетка и компоненты, тема переопределена переменными |
+| Vite 5 | dev-сервер, сборка, прокси к API |
+| Vitest | юнит-тесты на нормализацию ответа и экшены |
+
+## Запуск
+
+```bash
+npm install
+cp .env.example .env      # Windows: copy .env.example .env
+npm run dev               # http://localhost:5173
+```
+
+В `.env` один параметр — ключ покупателя из примеров официальной документации:
+
+```
+VITE_API_KEY=00000000-0000-0000-0000-000000000001
+```
+
+Проверка и сборка:
+
+```bash
+npm test                  # vitest, 10 тестов
+npm run build             # production в dist/
+npm run preview           # собранное приложение, прокси тоже работает
+```
+
+## Почему прокси
+
+API не отдаёт CORS-заголовки, поэтому браузер не может ходить в него напрямую. В `vite.config.js`
+настроен прокси: `/api/hs/hsprice/…` → `https://api.favorit-parts.ru/hs/hsprice/…`. Он включён и для
+`server`, и для `preview`. В продакшене такой же прокси ставится на nginx (или запросы идут через
+свой бэкенд) — иначе ключ и запросы окажутся в браузере.
+
+Ключ попадает в клиентский бандл (префикс `VITE_`), для тестового это нормально; в реальном
+проекте запросы проксируются через сервер, и ключ остаётся на нём.
+
+## Как устроено
+
+```
+src/
+  api/http.js                 экземпляр axios: базовый url + key из .env
+  redux/
+    store.js                  configureStore
+    initialState.js           начальные состояния обоих слайсов
+    slices/                   brandsSlice, analoguesSlice: loading | success | error
+    actions/                  brandsAction, analoguesAction (+ тесты)
+  hooks/useDebounce.js        задержка запроса, пока печатают
+  utils/
+    normalizeBrands.js        список производителей: без пустых и дублей
+    normalizeOffers.js        строки таблицы: цена со складов, остаток, аналоги
+  Components/
+    features/PartSearch       этап 1: поле артикула и список брендов
+    features/BrandList        список брендов
+    features/Analogues        этап 2: состояния и таблица
+    features/AnaloguesTable   таблица: деталь + аналоги
+    UI/                       SearchInput, Preloader, EmptyState, ErrorMessage
+    List/ListItems.jsx        общий рендер списка
+  styles/main.scss            Bootstrap с переменными темы, класс .panel
+```
+
+### Цена берётся со складов
+
+По документации `goods.price` использовать нельзя («остался для совместимости, цену нужно брать
+из конкретного склада»). Поэтому в `normalizeOffers` цена считается по `warehouses`:
+
+- среди складов, где `stock > 0`, берётся минимальная `price`;
+- если остатка нет нигде — минимальная цена склада, а позиция помечается «нет в наличии»;
+- если склады не пришли — цена `—`, приложение не падает;
+- когда дешёвых складов несколько, в таблице пишется «от N ₽».
+
+Остаток — `goods.count` («остаток на всех складах»). Позиции с нулевым остатком не выбрасываются:
+документация отдельно оговаривает, что такая позиция приходит и её надо показать.
+
+### Состояния и ошибки
+
+- `isLoading`: `''` (ещё не искали) → `pending` → `success` | `error`. Для каждого состояния свой
+  компонент: подсказка, `Preloader`, `ErrorMessage` или пустое состояние.
+- Ошибки разбираются по документации: `{ error }` в теле ответа (`Invalid key client!`,
+  `Request quota exceeded!`), HTTP-ошибка с тем же полем, отсутствие ответа → сообщение о сети.
+- Пустой ответ API — массив с одной пустой структурой; нормализация возвращает `[]`, показывается
+  «ничего не найдено».
+- Каждый запрос отменяется через `AbortController`, если пользователь изменил артикул или выбрал
+  другой бренд: поздний ответ не перезапишет свежий результат, отмена не считается ошибкой.
+- Пока грузится новый бренд, старая таблица остаётся под полупрозрачным лоадером — страница не
+  прыгает.
+
+## Тесты
+
+```
+src/utils/normalizeOffers.test.js          цена из warehouses, игнор складов без остатка,
+                                           нулевой остаток, пустой ответ, нет складов
+src/redux/actions/brandsAction.test.js     запрос этапа 1 и нормализация списка
+src/redux/actions/analoguesAction.test.js  запрос этапа 2, ошибка API, сеть
+```
+
+`npm test` — 11 тестов, все проходят. Сеть в тестах не используется: `$api` и `dispatch` — заглушки.
+
+## Ограничения
+
+- Ключ тестовый, из примеров документации: у него есть лимит запросов (`Request quota exceeded!`).
+- Пагинации нет: сервис отдаёт всё сразу, а таблица сортирует аналоги по возрастанию цены.
+- Данные о складах показываются только ценой и остатком; дата отгрузки (`shipmentDate`) и признак
+  невозвратной позиции (`info=on`) не выводятся — в задании их не требовали.

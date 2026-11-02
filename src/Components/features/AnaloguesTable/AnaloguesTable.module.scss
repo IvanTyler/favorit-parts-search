@@ -34,7 +34,8 @@
 
     // Заголовок раздела крупнее строк под ним — чтобы сразу читалась группа
     &__section th {
-        background-color: #f4f5f7;
+        // Тёплый светлый фон — отделяет разделы от серой шапки и белых строк
+        background-color: #f2efe9;
         color: var(--bs-body-color);
         font-size: clamp(0.8125rem, 0.65rem + 0.7vw, 1.0625rem); // ~13px → 17px
         font-weight: 700;
